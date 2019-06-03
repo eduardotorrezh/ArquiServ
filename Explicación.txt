@@ -1,0 +1,199 @@
+-> Setting.py
+-> local_setting.py
+-> rasp_settings.py
+-> .env  
+-> Se ve a deployar en Heroku
+
+
+1.- Se debe crear un modelo de registro dentinado a darse de alta en el RFID
+2.- Modelo alumnos. { Campos ´id_rfid´ }
+
+
+-----> Copiar el gitignore
+
+-----> Se  crean los permisos dentro de el ALLOWEB_HOST, ip_or_dns
+-----> Crear archivo local_settings.py, copiar todo settings.py. Pero con ALLOWED_HOST, vacío, y el debug = true
+
+----- en settings.py cear una excepcioón
+
+STATIC_URL = '/static/'
+
+try:
+	from arqui.local_settings import * 
+except import ImportError:
+	pass
+
+if not DEBUG:
+	SECRET_KEY = 'SECRET_KEY'
+	DATABASES = {
+	    'default': {
+	        'ENGINE' : 'django.db.backends.mysql',
+	        'NAME' : 'arquidb',
+	        'USER': 'root',
+	        'PASSWORD': '', 
+	        'HOST': 'localhost',
+	        'PORT': '3306'
+	    }
+	}
+
+______________________________-
+instalar paqueterias de heroku
+-----> pip install django-heroku
+-----> pip install dj-database-url
+-----> pip install gnicorn
+-----> pip install whithenoise
+-----> pip install 
+
+
+_____________________________________
+
+settings
+
+import os
+
+from decouple import config
+import dj_database_url
+
+
+_________________-
+
+Se deben crear archivos para heroku
+
+touch Procfile 
+
+dentro se coloca:
+
+web: gunicorn arqui.wsgi:application --pythonpath app --log-file -
+
+
+touch run-dev
+
+dentro se coloca: 
+
+python manage.py runserver --settings.py=arqui.settings.deveploment
+
+
+touch runtime.txt
+
+dentro se coloca: 
+
+python-3.6.4 
+
+
+________________________
+
+Conectar heroku con git
+Y que sea deployable, crear la base de datos 
+Configuración de as variables. 
+
+SECRET_KEY = 
+DB_NAME
+DB_USER
+
+Y ASi todos los que aparecen .
+
+Ya que se configura la DB, se hace un deploy manual
+y se verifica si se genera algún error. 
+
+si no genera error te da un link
+
+
+Desde el servidor local
+
+heroku run python manage.py makemigrations --app NOMBREDELPROYECTO.
+heroku run python manage.py createsuperuser --app NOMBRE DEL PROYECTO. 
+
+migra las cosas, después revisar la url del proyecto
+y si marca un error de falta de credenciales, FELICIDADES.
+
+
+
+______________________________________________________________
+
+
+python manage.py startapp example 
+touch urls.py 
+
+ dentro de la carpeta  crear :
+
+serializer.py
+
+
+
+Agregar en Settings y local settings las aplicaciones independientes de django. 
+donde está login, que esté exam
+
+Dentro de example : 
+Models.py 
+dentro :
+
+from django.db import models
+from django.utils import timezone
+
+class Example(models.model):
+	name_example = models.CharField(max_length=254, null=False)
+	year_example = models.IntegerField(null=False)
+	delete = models.BooleanField(default=False)
+	create = models.DateTimeField(default=timezone.now)
+
+	def __str__(self):
+		return self.name
+	
+	class Meta:
+		db_table = 'Example'
+
+
+________________________
+
+En este archivo se importan los modelos
+
+Serializer:
+
+from rest_framework import routers, serializers, viewsets
+
+from example.models import Example 
+
+class ExampleSerializers(serializers.ModelSerializer):
+	class Meta: 
+		model = Example
+		fields = ('__all__')
+
+
+
+__________________________-
+
+touch views.py
+
+en el :
+
+from django.shortcuts import get_object_or_404
+from django.http import Http404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework import generics
+
+from example.models import Example
+from example.serializer import ExampleSerializers
+
+class ExampleList(APIView):
+	#GET para Solicitar info
+	def get(self, request, format=None):
+	queryset = Example.objects.filter(delete = False)
+	serializer = ExampleSerializers(queryset)
+	return Response(serializer.data)
+
+
+
+________________________________-
+urls.py (example hijo)
+dentro:
+from django.urls import path,re_path
+from django.conf.urls import include
+from django.contrib.auth.models import User
+
+from example import views
+
+urlpatterns = [
+	re_path(r'example_lista/$', views.ExampleList.as_view())
+	]
